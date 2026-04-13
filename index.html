@@ -107,12 +107,29 @@
     .val { color: #666; min-width: 3em; text-align: right; font-size: 0.6rem; }
 
     .row { display: flex; gap: 0.4rem; align-items: center; }
+
+    .weight-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 0.55rem;
+      color: #555;
+      margin-left: 2rem;
+    }
+    .weight-panel .wr {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .weight-panel input[type="range"] { width: 50px; }
+    .weight-panel .wv { min-width: 2em; text-align: right; color: #666; }
   </style>
 </head>
 <body>
 
   <div class="board-wrap">
     <div id="board"></div>
+    <div class="weight-panel" id="weight-panel"></div>
   </div>
 
   <!-- Patterns -->
@@ -201,10 +218,10 @@
       <button id="btn-font">Apply</button>
     </div>
     <div class="row">
-      <label class="label" style="margin:0">grid</label>
-      <input type="text" id="in-rows" value="6" style="width:3em; text-align:center"> &times;
-      <input type="text" id="in-cols" value="36" style="width:3em; text-align:center">
-      <button id="btn-resize">Resize</button>
+      <label class="label" style="margin:0">align</label>
+      <button data-align="left">Left</button>
+      <button data-align="center">Center</button>
+      <button data-align="right">Right</button>
     </div>
   </div>
 
@@ -249,7 +266,7 @@
     const { SplitFlapDisplay, patterns } = SplitFlap;
 
     let board = new SplitFlapDisplay(document.getElementById("board"), {
-      rows: 6,
+      rows: 10,
       cols: 36,
       flipSpeed: 35,
       flip: { drumRolls: 4 },
@@ -280,6 +297,10 @@
         "  TOKYO      15:45  C08  DELAYED ",
         "  PARIS      16:20  A23  ON TIME ",
         "  BERLIN     17:00  B15  SCHEDULED",
+        "  ROME       17:30  C02  ON TIME ",
+        "  SEOUL      18:00  A07  DELAYED ",
+        "  SYDNEY     18:45  B11  SCHEDULED",
+        "  CHICAGO    19:10  D04  ON TIME ",
       ],
       arrivals: [
         "  ORIGIN     TIME  GATE  STATUS  ",
@@ -288,20 +309,57 @@
         "  SEOUL      14:20  C11  DELAYED ",
         "  SAO PAULO  14:45  B09  APPROACH",
         "  SYDNEY     15:30  D14  EN ROUTE",
+        "  BERLIN     16:00  A03  LANDED  ",
+        "  TOKYO      16:25  C09  ON TIME ",
+        "  LONDON     17:00  B06  APPROACH",
+        "  NEW YORK   17:40  D12  EN ROUTE",
       ],
       message: [
-        "                                    ",
+        "",
+        "",
         "     THIS IS A SPLIT FLAP BOARD     ",
         "    EACH CELL FLIPS INDEPENDENTLY   ",
         "   JUST LIKE AN OLD TRAIN STATION   ",
-        "                                    ",
+        "",
         "          HAVE A SAFE TRIP          ",
+        "",
+        "",
+        "",
       ],
-      blank: ["", "", "", "", "", ""],
+      blank: ["", "", "", "", "", "", "", "", "", ""],
     };
 
     let curPat = "random";
     board.setText(presets.departures);
+
+    // ── Row weight sliders ───────────────────────────
+    function buildWeightPanel() {
+      const panel = document.getElementById("weight-panel");
+      panel.innerHTML = "";
+      for (let r = 0; r < board.rows; r++) {
+        const wrap = document.createElement("div");
+        wrap.className = "wr";
+        const label = document.createElement("span");
+        label.textContent = r;
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "100";
+        slider.max = "900";
+        slider.step = "100";
+        slider.value = "400";
+        const val = document.createElement("span");
+        val.className = "wv";
+        val.textContent = "400";
+        slider.addEventListener("input", () => {
+          const w = +slider.value;
+          val.textContent = w;
+          board.setRowWeight(r, w);
+        });
+        wrap.append(label, slider, val);
+        panel.appendChild(wrap);
+      }
+    }
+    buildWeightPanel();
 
     // ── Pattern buttons ──────────────────────────────
     document.querySelectorAll("[data-pat]").forEach((btn) => {
@@ -371,10 +429,11 @@
       board.setLayout({ font: document.getElementById("in-font").value });
     });
 
-    document.getElementById("btn-resize").addEventListener("click", () => {
-      const r = parseInt(document.getElementById("in-rows").value) || 6;
-      const c = parseInt(document.getElementById("in-cols").value) || 36;
-      board.resize(r, c);
+    document.querySelectorAll("[data-align]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        board.setAlign(btn.dataset.align);
+        board.flipTo(board.getText(), pat(curPat), true);
+      });
     });
 
     // ── Toggle A/B ───────────────────────────────────
