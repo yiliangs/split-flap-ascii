@@ -1,6 +1,7 @@
 export {
   computeFlipSteps,
   resolveFlipConfig,
+  DEFAULT_FLIP_CONFIG,
   FlipGrid,
   runFlipPlan,
   patterns,

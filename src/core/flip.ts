@@ -1,6 +1,6 @@
 import { FlipStep, FlipConfig } from "./types";
 
-const DEFAULTS: FlipConfig = {
+export const DEFAULT_FLIP_CONFIG: FlipConfig = {
   flipChar: "-",
   flipSpeed: 35,
   drumRolls: 4,
@@ -10,7 +10,7 @@ const DEFAULTS: FlipConfig = {
 export function resolveFlipConfig(
   partial?: Partial<FlipConfig>
 ): FlipConfig {
-  return { ...DEFAULTS, ...partial };
+  return { ...DEFAULT_FLIP_CONFIG, ...partial };
 }
 
 export function computeFlipSteps(
