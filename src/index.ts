@@ -15,4 +15,4 @@ export type {
 } from "./core";
 
 export { SplitFlapDisplay } from "./dom";
-export type { DisplayConfig, LayoutConfig } from "./dom";
+export type { DisplayConfig, LayoutConfig, TextAlign } from "./dom";
