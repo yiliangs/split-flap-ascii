@@ -18,6 +18,7 @@ const board = new SplitFlapDisplay(document.getElementById("board"), {
   cols: 36,
   flipSpeed: 35,
   flip: { drumRolls: 4 },
+  noise: 0.3,
   layout: { font: "monospace", fontSize: 18 },
 });
 
@@ -65,13 +66,13 @@ new SplitFlapDisplay(container: HTMLElement, config: DisplayConfig)
 | `cols` | `number` | — | Number of columns |
 | `flip` | `Partial<FlipConfig>` | — | Flip behavior (see below) |
 | `flipSpeed` | `number` | `35` | Milliseconds per animation step |
-| `noise` | `number` | `0` | Per-cell randomization (0–1) |
+| `noise` | `number` | `0` | Per-cell randomization, 0–1 (see [Noise](#noise)) |
 | `layout` | `Partial<LayoutConfig>` | — | Visual styling (see below) |
 
 | Method | Description |
 |---|---|
 | `setText(lines: string[])` | Set all cells immediately, no animation |
-| `flipTo(lines, pattern?, force?): Promise` | Animate to new text. `force` re-flips unchanged cells |
+| `flipTo(lines, pattern?, force?): Promise` | Animate to new text (see [Force flip](#force-flip)) |
 | `getText(): string[]` | Read current display text |
 | `cellAt(row, col): HTMLElement` | Access a cell's DOM element |
 | `cancelAll()` | Stop all in-progress animations |
@@ -79,13 +80,14 @@ new SplitFlapDisplay(container: HTMLElement, config: DisplayConfig)
 | `setLayout(partial)` | Update layout config, rebuilds DOM |
 | `setFlipConfig(partial)` | Update flip config (drumRolls, flipChar, charset) |
 | `setFlipSpeed(ms)` | Update animation step duration |
-| `setNoise(n)` | Set noise level (0–1) |
+| `setNoise(n)` | Set noise level, 0–1 |
 
 ### `FlipConfig`
 
 | Option | Default | Description |
 |---|---|---|
 | `flipChar` | `"-"` | Character shown during flip transition |
+| `flipSpeed` | `35` | Milliseconds per animation step |
 | `drumRolls` | `4` | Random characters to cycle through before settling |
 | `charset` | `A–Z 0–9` | Pool for drum roll characters |
 
@@ -102,25 +104,63 @@ new SplitFlapDisplay(container: HTMLElement, config: DisplayConfig)
 | `color` | `"#ddd"` | Text color |
 | `flipColor` | `"#666"` | Color during flip transition |
 
+### Defaults
+
+Both config defaults are exported so you can read or spread from them:
+
+```ts
+import { DEFAULT_FLIP_CONFIG, DEFAULT_LAYOUT } from "split-flap-ascii";
+
+// Override just what you need
+const myFlip = { ...DEFAULT_FLIP_CONFIG, drumRolls: 8 };
+const myLayout = { ...DEFAULT_LAYOUT, color: "#0f0" };
+```
+
 ### `patterns`
 
-Delay functions that control the order cells flip. Each returns a `PatternFn = (row, col, rows, cols) => delayMs`.
+Delay functions that control the order cells flip. Each factory returns a `PatternFn = (row, col, rows, cols) => delayMs`.
 
-| Pattern | Description |
-|---|---|
-| `patterns.simultaneous()` | All cells flip at once |
-| `patterns.sequential(delay?)` | Left-to-right, top-to-bottom |
-| `patterns.random(maxDelay?)` | Each cell gets a random delay |
-| `patterns.fromCorner(corner?, speed?)` | Expand from `"tl"` `"tr"` `"bl"` `"br"` |
-| `patterns.fromCenter(speed?)` | Radial expansion from center |
-| `patterns.wave(direction?, speed?)` | `"left"` `"right"` `"top"` `"bottom"` |
-| `patterns.diagonal(speed?)` | Top-left diagonal sweep |
-| `patterns.custom(fn)` | Your own `PatternFn` |
+| Pattern | Default args | Description |
+|---|---|---|
+| `patterns.simultaneous()` | — | All cells flip at once (delay = 0) |
+| `patterns.sequential(delayPerCell)` | `30` ms | Left-to-right, top-to-bottom. Each cell starts `delayPerCell` ms after the previous |
+| `patterns.random(maxDelay)` | `600` ms | Each cell gets a random delay between 0 and `maxDelay` |
+| `patterns.fromCorner(corner, speed)` | `"tl"`, `18` ms/cell | Expand from a corner. `speed` is ms per unit of Manhattan distance. Corners: `"tl"` `"tr"` `"bl"` `"br"` |
+| `patterns.fromCenter(speed)` | `22` ms/cell | Radial expansion from center. `speed` is ms per unit of Euclidean distance |
+| `patterns.wave(direction, speed)` | `"left"`, `25` ms/col | Sweep across one axis. `speed` is ms per row or column. Directions: `"left"` `"right"` `"top"` `"bottom"` |
+| `patterns.diagonal(speed)` | `22` ms/cell | Top-left diagonal sweep. `speed` is ms per diagonal index |
+| `patterns.custom(fn)` | — | Pass your own `(row, col, rows, cols) => delayMs` |
+
+### Noise
+
+The `noise` parameter (0–1) adds organic variation so cells don't flip in lockstep. It affects three things:
+
+- **Start delay** — each cell's pattern delay gets a random offset, up to `noise * averageCellDuration` ms
+- **Step speed** — each cell's flip speed is randomly scaled between `0.2x` and `1 + noise` of the base speed
+- **Drum rolls** — each cell gets a randomly varied number of rolls (e.g. at `noise=0.5`, a base of 4 rolls may become 2–6)
+
+`0` is perfectly mechanical. `0.2–0.4` feels natural. Above `0.6` gets chaotic.
+
+### Force flip
+
+By default, `flipTo` skips cells where the character hasn't changed. Pass `force = true` as the third argument to re-animate every non-empty cell:
+
+```ts
+// Only changed cells flip
+await board.flipTo(newLines, patterns.wave("left", 25));
+
+// All non-empty cells flip, even if text is the same
+await board.flipTo(board.getText(), patterns.wave("left", 25), true);
+```
+
+This is useful for pattern demos, visual refreshes, or "shuffle" effects where the content stays the same but you want the animation.
 
 ### Headless usage (core only)
 
+For non-DOM environments (Node, terminal, canvas, WebGL), use the core API directly:
+
 ```ts
-import { FlipGrid, computeFlipSteps, runFlipPlan, patterns } from "split-flap-ascii";
+import { FlipGrid, runFlipPlan, patterns } from "split-flap-ascii";
 
 const grid = new FlipGrid(4, 30, { drumRolls: 4 });
 grid.setText(["HELLO WORLD"]);
@@ -128,14 +168,27 @@ grid.setText(["HELLO WORLD"]);
 const jobs = grid.plan(["GOODBYE"], patterns.wave("left", 25));
 grid.setText(["GOODBYE"]);
 
-// Drive animation yourself
 const handle = runFlipPlan(jobs, 35, (row, col, step) => {
-  // render step.char at (row, col)
+  // step.char — the character to display
+  // step.intermediate — true during flip transition, false on settle
 });
 
-// Or compute steps for a single cell
-const steps = computeFlipSteps("A", "Z", { drumRolls: 4 });
+await handle.promise;
+
+// Cancel mid-animation (resolves the promise immediately)
+handle.cancel();
 ```
+
+For single-cell computation without a grid:
+
+```ts
+import { computeFlipSteps } from "split-flap-ascii";
+
+const steps = computeFlipSteps("A", "Z", { drumRolls: 4 });
+// steps: [{ char: "-", intermediate: true }, { char: "M", intermediate: false }, ...]
+```
+
+`runFlipPlan` uses a single `setInterval` tick internally. `handle.cancel()` clears the timer and resolves the promise so `await` callers don't hang.
 
 ## CSS classes
 
