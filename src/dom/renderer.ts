@@ -36,7 +36,7 @@ export class SplitFlapDisplay {
     this.container = container;
     this.grid = new FlipGrid(config.rows, config.cols, config.flip);
     this.layout = { ...DEFAULT_LAYOUT, ...config.layout };
-    this.flipSpeed = config.flipSpeed ?? 35;
+    this.flipSpeed = config.flipSpeed ?? this.grid.flipConfig.flipSpeed;
     this.noise = config.noise ?? 0;
     this.buildDom();
   }

@@ -2,6 +2,7 @@ import { FlipStep, FlipConfig } from "./types";
 
 const DEFAULTS: FlipConfig = {
   flipChar: "-",
+  flipSpeed: 35,
   drumRolls: 4,
   charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
 };

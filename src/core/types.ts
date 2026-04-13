@@ -5,6 +5,7 @@ export interface FlipStep {
 
 export interface FlipConfig {
   flipChar: string;
+  flipSpeed: number;
   drumRolls: number;
   charset: string;
 }
