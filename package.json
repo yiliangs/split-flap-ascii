@@ -3,10 +3,18 @@
   "version": "0.1.0",
   "description": "Split-flap display effect for ASCII characters — like old train station departure boards",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": ["dist"],
   "scripts": {
-    "build": "tsc && npx esbuild src/index.ts --bundle --outfile=dist/split-flap.iife.js --format=iife --global-name=SplitFlap",
+    "build": "tsc && npx esbuild src/index.ts --bundle --format=iife --global-name=SplitFlap --outfile=dist/split-flap.iife.js && npx esbuild src/index.ts --bundle --format=esm --outfile=dist/index.mjs",
     "prepublishOnly": "npm run build"
   },
   "keywords": ["split-flap", "ascii", "animation", "terminal", "departure-board", "flip"],
