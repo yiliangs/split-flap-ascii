@@ -15,5 +15,5 @@ export type {
   AnimationHandle,
 } from "./core";
 
-export { SplitFlapDisplay } from "./dom";
+export { SplitFlapDisplay, DEFAULT_LAYOUT } from "./dom";
 export type { DisplayConfig, LayoutConfig } from "./dom";
