@@ -14,10 +14,15 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsc && npx esbuild src/index.ts --bundle --format=iife --global-name=SplitFlap --outfile=dist/split-flap.iife.js && npx esbuild src/index.ts --bundle --format=esm --outfile=dist/index.mjs",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc && npx esbuild src/index.ts --bundle --format=iife --global-name=SplitFlap --outfile=dist/split-flap.iife.js && npx esbuild src/index.ts --bundle --format=esm --outfile=dist/index.mjs",
     "prepublishOnly": "npm run build"
   },
   "keywords": ["split-flap", "ascii", "animation", "terminal", "departure-board", "flip"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yiliangs/split-flap-ascii.git"
+  },
   "author": "yiliangs",
   "license": "MIT",
   "devDependencies": {
