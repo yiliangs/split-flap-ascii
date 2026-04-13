@@ -2,7 +2,7 @@
 
 Split-flap display effect for ASCII characters — like the departure boards in old train stations. Each cell independently flips through intermediate characters before settling on its target, with configurable orchestration patterns across the grid.
 
-https://github.com/yiliangs/split-flap-ascii/raw/master/assets/demo.mp4
+![demo](assets/demo.gif)
 
 ## Install
 
