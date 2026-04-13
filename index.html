@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>split-flap-ascii</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #111;
+      color: #ccc;
+      font-family: "Cascadia Code", "Consolas", monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      gap: 1.2rem;
+    }
+
+    .board-wrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      overflow-x: auto;
+      padding: 1rem 0;
+    }
+
+    .sf-cell.sf-flipping { opacity: 0.6; }
+
+    .panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      justify-content: center;
+      max-width: 750px;
+    }
+
+    .group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      align-items: center;
+    }
+
+    .label {
+      font-size: 0.55rem;
+      color: #444;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    button {
+      background: #1a1a1a;
+      color: #888;
+      border: 1px solid #333;
+      padding: 0.3rem 0.6rem;
+      font-family: inherit;
+      font-size: 0.65rem;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    button:hover { color: #ddd; border-color: #555; }
+
+    textarea {
+      background: #1a1a1a;
+      color: #ccc;
+      border: 1px solid #333;
+      padding: 0.4rem 0.6rem;
+      font-family: inherit;
+      font-size: 0.7rem;
+      border-radius: 3px;
+      resize: vertical;
+      width: 360px;
+      height: 5em;
+      line-height: 1.5;
+    }
+    textarea:focus { outline: none; border-color: #555; }
+
+    select, input[type="text"] {
+      background: #1a1a1a;
+      color: #888;
+      border: 1px solid #333;
+      padding: 0.3rem 0.5rem;
+      font-family: inherit;
+      font-size: 0.65rem;
+      border-radius: 3px;
+    }
+
+    .sliders {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .slider-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.6rem;
+      color: #555;
+    }
+    .slider-item label { min-width: 4.5em; }
+    input[type="range"] { width: 70px; accent-color: #888; }
+    .val { color: #666; min-width: 3em; text-align: right; font-size: 0.6rem; }
+
+    .row { display: flex; gap: 0.4rem; align-items: center; }
+  </style>
+</head>
+<body>
+
+  <div class="board-wrap">
+    <div id="board"></div>
+  </div>
+
+  <!-- Patterns -->
+  <div class="group">
+    <span class="label">patterns</span>
+    <div class="panel">
+      <button data-pat="simultaneous">Simultaneous</button>
+      <button data-pat="wave-left">Wave &rarr;</button>
+      <button data-pat="wave-right">Wave &larr;</button>
+      <button data-pat="wave-top">Wave &darr;</button>
+      <button data-pat="random">Random</button>
+      <button data-pat="corner-tl">Corner TL</button>
+      <button data-pat="corner-br">Corner BR</button>
+      <button data-pat="center">Center Out</button>
+      <button data-pat="diagonal">Diagonal</button>
+      <button data-pat="sequential">Sequential</button>
+    </div>
+  </div>
+
+  <!-- Presets -->
+  <div class="group">
+    <span class="label">presets</span>
+    <div class="panel">
+      <button data-pre="departures">Departures</button>
+      <button data-pre="arrivals">Arrivals</button>
+      <button data-pre="message">Message</button>
+      <button data-pre="blank">Clear</button>
+    </div>
+  </div>
+
+  <!-- Flip tuning -->
+  <div class="group">
+    <span class="label">flip</span>
+    <div class="sliders">
+      <div class="slider-item">
+        <label>speed</label>
+        <input type="range" id="s-speed" min="10" max="120" value="35">
+        <span class="val" id="v-speed">35ms</span>
+      </div>
+      <div class="slider-item">
+        <label>rolls</label>
+        <input type="range" id="s-rolls" min="0" max="14" value="4">
+        <span class="val" id="v-rolls">4</span>
+      </div>
+      <div class="slider-item">
+        <label>noise</label>
+        <input type="range" id="s-noise" min="0" max="100" value="0">
+        <span class="val" id="v-noise">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="group">
+    <span class="label">layout</span>
+    <div class="sliders">
+      <div class="slider-item">
+        <label>font size</label>
+        <input type="range" id="s-fontsize" min="8" max="48" value="18">
+        <span class="val" id="v-fontsize">18px</span>
+      </div>
+      <div class="slider-item">
+        <label>cell gap</label>
+        <input type="range" id="s-cellgap" min="0" max="16" value="0">
+        <span class="val" id="v-cellgap">0px</span>
+      </div>
+      <div class="slider-item">
+        <label>row gap</label>
+        <input type="range" id="s-rowgap" min="0" max="24" value="0">
+        <span class="val" id="v-rowgap">0px</span>
+      </div>
+      <div class="slider-item">
+        <label>cell W</label>
+        <input type="range" id="s-cellw" min="0" max="40" value="0">
+        <span class="val" id="v-cellw">auto</span>
+      </div>
+      <div class="slider-item">
+        <label>cell H</label>
+        <input type="range" id="s-cellh" min="0" max="60" value="0">
+        <span class="val" id="v-cellh">auto</span>
+      </div>
+    </div>
+    <div class="row">
+      <label class="label" style="margin:0">font</label>
+      <input type="text" id="in-font" value="monospace" style="width:220px">
+      <button id="btn-font">Apply</button>
+    </div>
+    <div class="row">
+      <label class="label" style="margin:0">grid</label>
+      <input type="text" id="in-rows" value="6" style="width:3em; text-align:center"> &times;
+      <input type="text" id="in-cols" value="36" style="width:3em; text-align:center">
+      <button id="btn-resize">Resize</button>
+    </div>
+  </div>
+
+  <!-- Custom text -->
+  <div class="group">
+    <span class="label">custom text</span>
+    <div class="row">
+      <textarea id="custom" placeholder="Type lines here...&#10;One per row"></textarea>
+      <div style="display:flex; flex-direction:column; gap:0.3rem;">
+        <select id="pat-select">
+          <option value="simultaneous">Simultaneous</option>
+          <option value="wave-left">Wave &rarr;</option>
+          <option value="wave-right">Wave &larr;</option>
+          <option value="wave-top">Wave &darr;</option>
+          <option value="random" selected>Random</option>
+          <option value="corner-tl">Corner TL</option>
+          <option value="corner-br">Corner BR</option>
+          <option value="center">Center Out</option>
+          <option value="diagonal">Diagonal</option>
+          <option value="sequential">Sequential</option>
+        </select>
+        <button id="btn-flip">Flip!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toggle panel -->
+  <div class="group">
+    <span class="label">toggle between A / B</span>
+    <div style="display:flex; gap:0.6rem; align-items:flex-start;">
+      <textarea id="toggle-a" placeholder="Text A" style="width:280px; height:5em;"></textarea>
+      <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:center; align-self:center;">
+        <button id="btn-toggle">A &harr; B</button>
+        <span class="val" id="toggle-side">A</span>
+      </div>
+      <textarea id="toggle-b" placeholder="Text B" style="width:280px; height:5em;"></textarea>
+    </div>
+  </div>
+
+  <script src="dist/split-flap.iife.js"></script>
+  <script>
+    const { SplitFlapDisplay, patterns } = SplitFlap;
+
+    let board = new SplitFlapDisplay(document.getElementById("board"), {
+      rows: 6,
+      cols: 36,
+      flipSpeed: 35,
+      flip: { drumRolls: 4 },
+      layout: { font: "monospace", fontSize: 18 },
+    });
+
+    function pat(name) {
+      switch (name) {
+        case "simultaneous": return patterns.simultaneous();
+        case "sequential":   return patterns.sequential(20);
+        case "random":       return patterns.random(600);
+        case "corner-tl":    return patterns.fromCorner("tl", 18);
+        case "corner-br":    return patterns.fromCorner("br", 18);
+        case "center":       return patterns.fromCenter(22);
+        case "wave-left":    return patterns.wave("left", 25);
+        case "wave-right":   return patterns.wave("right", 25);
+        case "wave-top":     return patterns.wave("top", 40);
+        case "diagonal":     return patterns.diagonal(22);
+        default:             return patterns.simultaneous();
+      }
+    }
+
+    const presets = {
+      departures: [
+        "  DEST       TIME  GATE  STATUS  ",
+        "  NEW YORK   14:30  A12  ON TIME ",
+        "  LONDON     15:00  B04  BOARDING",
+        "  TOKYO      15:45  C08  DELAYED ",
+        "  PARIS      16:20  A23  ON TIME ",
+        "  BERLIN     17:00  B15  SCHEDULED",
+      ],
+      arrivals: [
+        "  ORIGIN     TIME  GATE  STATUS  ",
+        "  CHICAGO    13:10  D02  LANDED  ",
+        "  ROME       13:55  A07  ON TIME ",
+        "  SEOUL      14:20  C11  DELAYED ",
+        "  SAO PAULO  14:45  B09  APPROACH",
+        "  SYDNEY     15:30  D14  EN ROUTE",
+      ],
+      message: [
+        "                                    ",
+        "     THIS IS A SPLIT FLAP BOARD     ",
+        "    EACH CELL FLIPS INDEPENDENTLY   ",
+        "   JUST LIKE AN OLD TRAIN STATION   ",
+        "                                    ",
+        "          HAVE A SAFE TRIP          ",
+      ],
+      blank: ["", "", "", "", "", ""],
+    };
+
+    let curPat = "random";
+    board.setText(presets.departures);
+
+    // ── Pattern buttons ──────────────────────────────
+    document.querySelectorAll("[data-pat]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        curPat = btn.dataset.pat;
+        board.flipTo(board.getText(), pat(curPat), true);
+      });
+    });
+
+    // ── Preset buttons ───────────────────────────────
+    document.querySelectorAll("[data-pre]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        board.flipTo(presets[btn.dataset.pre], pat(curPat));
+      });
+    });
+
+    // ── Custom text ──────────────────────────────────
+    document.getElementById("btn-flip").addEventListener("click", () => {
+      const lines = document.getElementById("custom").value
+        .split("\n")
+        .slice(0, board.rows)
+        .map((l) => l.toUpperCase().slice(0, board.cols));
+      while (lines.length < board.rows) lines.push("");
+      board.flipTo(lines, pat(document.getElementById("pat-select").value), true);
+    });
+
+    // ── Flip tuning ──────────────────────────────────
+    const sSpeed = document.getElementById("s-speed");
+    const sRolls = document.getElementById("s-rolls");
+
+    sSpeed.addEventListener("input", () => {
+      const v = +sSpeed.value;
+      document.getElementById("v-speed").textContent = v + "ms";
+      board.setFlipSpeed(v);
+    });
+
+    sRolls.addEventListener("input", () => {
+      const v = +sRolls.value;
+      document.getElementById("v-rolls").textContent = v;
+      board.setFlipConfig({ drumRolls: v });
+    });
+
+    const sNoise = document.getElementById("s-noise");
+    sNoise.addEventListener("input", () => {
+      const v = +sNoise.value;
+      document.getElementById("v-noise").textContent = v + "%";
+      board.setNoise(v / 100);
+    });
+
+    // ── Layout controls ──────────────────────────────
+    function layoutSlider(id, key, fmt) {
+      const el = document.getElementById("s-" + id);
+      el.addEventListener("input", () => {
+        const v = +el.value;
+        document.getElementById("v-" + id).textContent = fmt(v);
+        board.setLayout({ [key]: v === 0 && (key === "cellWidth" || key === "cellHeight") ? null : v });
+      });
+    }
+
+    layoutSlider("fontsize", "fontSize", (v) => v + "px");
+    layoutSlider("cellgap", "cellGap", (v) => v + "px");
+    layoutSlider("rowgap", "rowGap", (v) => v + "px");
+    layoutSlider("cellw", "cellWidth", (v) => (v === 0 ? "auto" : v + "px"));
+    layoutSlider("cellh", "cellHeight", (v) => (v === 0 ? "auto" : v + "px"));
+
+    document.getElementById("btn-font").addEventListener("click", () => {
+      board.setLayout({ font: document.getElementById("in-font").value });
+    });
+
+    document.getElementById("btn-resize").addEventListener("click", () => {
+      const r = parseInt(document.getElementById("in-rows").value) || 6;
+      const c = parseInt(document.getElementById("in-cols").value) || 36;
+      board.resize(r, c);
+    });
+
+    // ── Toggle A/B ───────────────────────────────────
+    let toggleSide = "A";
+    function parseTextarea(id) {
+      return document.getElementById(id).value
+        .split("\n")
+        .slice(0, board.rows)
+        .map((l) => l.toUpperCase().slice(0, board.cols));
+    }
+
+    document.getElementById("btn-toggle").addEventListener("click", () => {
+      const next = toggleSide === "A" ? "B" : "A";
+      const lines = parseTextarea(next === "A" ? "toggle-a" : "toggle-b");
+      while (lines.length < board.rows) lines.push("");
+      board.flipTo(lines, pat(curPat), true);
+      toggleSide = next;
+      document.getElementById("toggle-side").textContent = next;
+    });
+  </script>
+
+</body>
+</html>
