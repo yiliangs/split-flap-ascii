@@ -162,6 +162,10 @@
         <input type="range" id="s-noise" min="0" max="100" value="0">
         <span class="val" id="v-noise">0%</span>
       </div>
+      <div class="slider-item">
+        <label>force</label>
+        <button id="btn-force" style="min-width:2.5em;">ON</button>
+      </div>
     </div>
   </div>
 
@@ -301,20 +305,26 @@
     };
 
     let curPat = "random";
+    let forceFlip = true;
     board.setText(presets.departures);
+
+    document.getElementById("btn-force").addEventListener("click", () => {
+      forceFlip = !forceFlip;
+      document.getElementById("btn-force").textContent = forceFlip ? "ON" : "OFF";
+    });
 
     // ── Pattern buttons ──────────────────────────────
     document.querySelectorAll("[data-pat]").forEach((btn) => {
       btn.addEventListener("click", () => {
         curPat = btn.dataset.pat;
-        board.flipTo(board.getText(), pat(curPat), true);
+        board.flipTo(board.getText(), pat(curPat), forceFlip);
       });
     });
 
     // ── Preset buttons ───────────────────────────────
     document.querySelectorAll("[data-pre]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        board.flipTo(presets[btn.dataset.pre], pat(curPat));
+        board.flipTo(presets[btn.dataset.pre], pat(curPat), forceFlip);
       });
     });
 
@@ -325,7 +335,7 @@
         .slice(0, board.rows)
         .map((l) => l.toUpperCase().slice(0, board.cols));
       while (lines.length < board.rows) lines.push("");
-      board.flipTo(lines, pat(document.getElementById("pat-select").value), true);
+      board.flipTo(lines, pat(document.getElementById("pat-select").value), forceFlip);
     });
 
     // ── Flip tuning ──────────────────────────────────
@@ -390,7 +400,7 @@
       const next = toggleSide === "A" ? "B" : "A";
       const lines = parseTextarea(next === "A" ? "toggle-a" : "toggle-b");
       while (lines.length < board.rows) lines.push("");
-      board.flipTo(lines, pat(curPat), true);
+      board.flipTo(lines, pat(curPat), forceFlip);
       toggleSide = next;
       document.getElementById("toggle-side").textContent = next;
     });
