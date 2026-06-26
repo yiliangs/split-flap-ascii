@@ -5,6 +5,7 @@ export interface LayoutConfig {
   cellHeight: number | null;
   cellGap: number;
   rowGap: number;
+  width: number | null;
   color: string;
   flipColor: string;
 }
@@ -16,6 +17,7 @@ export const DEFAULT_LAYOUT: LayoutConfig = {
   cellHeight: null,
   cellGap: 0,
   rowGap: 0,
+  width: null,
   color: "#ddd",
   flipColor: "#666",
 };

@@ -70,13 +70,17 @@ export class SplitFlapDisplay {
     this.container.style.display = "inline-flex";
     this.container.style.flexDirection = "column";
     this.container.style.alignItems = "stretch";
+    this.container.style.fontSize = this.layout.fontSize + "px";
 
     const cellW =
       this.layout.cellWidth != null
         ? `${this.layout.cellWidth}px`
         : "0.6em";
     const gap = this.layout.cellGap;
-    this.container.style.minWidth = `calc(${this.grid.cols} * ${cellW} + ${this.grid.cols - 1} * ${gap}px)`;
+    const naturalW = `calc(${this.grid.cols} * ${cellW} + ${this.grid.cols - 1} * ${gap}px)`;
+    const w = this.layout.width != null ? `${this.layout.width}px` : naturalW;
+    this.container.style.width = w;
+    this.container.style.minWidth = w;
 
     const jc = this.justifyValue();
     this.cells = [];

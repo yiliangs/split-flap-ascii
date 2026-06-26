@@ -211,6 +211,11 @@
         <input type="range" id="s-cellh" min="0" max="60" value="0">
         <span class="val" id="v-cellh">auto</span>
       </div>
+      <div class="slider-item">
+        <label>canvas W</label>
+        <input type="range" id="s-canvasw" min="0" max="1400" step="10" value="0">
+        <span class="val" id="v-canvasw">auto</span>
+      </div>
     </div>
     <div class="row">
       <label class="label" style="margin:0">font</label>
@@ -410,12 +415,13 @@
     });
 
     // ── Layout controls ──────────────────────────────
+    const AUTO_KEYS = new Set(["cellWidth", "cellHeight", "width"]);
     function layoutSlider(id, key, fmt) {
       const el = document.getElementById("s-" + id);
       el.addEventListener("input", () => {
         const v = +el.value;
         document.getElementById("v-" + id).textContent = fmt(v);
-        board.setLayout({ [key]: v === 0 && (key === "cellWidth" || key === "cellHeight") ? null : v });
+        board.setLayout({ [key]: v === 0 && AUTO_KEYS.has(key) ? null : v });
       });
     }
 
@@ -424,6 +430,7 @@
     layoutSlider("rowgap", "rowGap", (v) => v + "px");
     layoutSlider("cellw", "cellWidth", (v) => (v === 0 ? "auto" : v + "px"));
     layoutSlider("cellh", "cellHeight", (v) => (v === 0 ? "auto" : v + "px"));
+    layoutSlider("canvasw", "width", (v) => (v === 0 ? "auto" : v + "px"));
 
     document.getElementById("btn-font").addEventListener("click", () => {
       board.setLayout({ font: document.getElementById("in-font").value });
